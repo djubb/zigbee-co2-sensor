@@ -119,10 +119,12 @@ int16_t sensirion_i2c_hal_reset_bus(void) {
 int16_t sensirion_i2c_hal_free(void) {
     if(dev_handle != NULL){
         ESP_RETURN_ON_ERROR(i2c_master_bus_rm_device(*dev_handle), TAG, "Failed to remove device from I2C bus");
+        free(dev_handle);
         dev_handle = NULL;
     }
     if(bus_handle != NULL){
-        ESP_RETURN_ON_ERROR(i2c_master_bus_reset(*bus_handle), TAG, "Failed to reset I2C bus");
+        ESP_RETURN_ON_ERROR(i2c_master_bus_delete(*bus_handle), TAG, "Failed to delete I2C bus");
+        free(bus_handle);
         bus_handle = NULL;
     }
     return ESP_OK;

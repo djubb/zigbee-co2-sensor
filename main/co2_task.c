@@ -89,7 +89,8 @@ void sdc41_task(void *pvParameters)
     {
         data_ready_flag = false;
         if(!measurement_running) {
-            sensirion_i2c_hal_reset_bus();
+            sensirion_i2c_hal_free();
+            sensirion_i2c_hal_init(SDC4X_SDA_PIN, SDC4X_SCL_PIN);
             ESP_LOGI(TAG, "Triggering SCD4x single shot measurement...");
             xTaskNotify(xZigbeeTask, CO2_MEASUREMENT_PENDING, eSetValueWithOverwrite);
             measurement_running = true;
