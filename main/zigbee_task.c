@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "ha/esp_zigbee_ha_standard.h"
+#include "zcl/esp_zigbee_zcl_power_config.h"
 #include "zigbee.h"
 #include "tasks.h"
 #include "esp_pm.h"
