@@ -62,7 +62,7 @@ void esp_zb_task(void *pvParameters)
     // ------------------------------ Cluster BASIC ------------------------------
     esp_zb_basic_cluster_cfg_t basic_cluster_cfg = {
         .zcl_version = ESP_ZB_ZCL_BASIC_ZCL_VERSION_DEFAULT_VALUE,
-        .power_source = 0x04, // mains powered
+        .power_source = 0x03, // battery powered
     };
     uint32_t ApplicationVersion = 0x0002;
     uint32_t StackVersion = 0x0002;
@@ -109,10 +109,26 @@ void esp_zb_task(void *pvParameters)
     };
     esp_zb_attribute_list_t *esp_zb_carbon_dioxide_meas_cluster = esp_zb_carbon_dioxide_measurement_cluster_create(&carbon_dioxide_meas_cfg);
 
+    // ------------------------------ Cluster Power Configuration (battery) -----------------------------------
+    esp_zb_power_config_cluster_cfg_t power_config_cfg = {
+        .main_voltage = 0,
+        .main_freq = 0,
+        .main_alarm_mask = 0,
+        .main_voltage_min = 0,
+        .main_voltage_max = 0,
+        .main_voltage_dwell = 0,
+    };
+    uint8_t battery_voltage = 37;      // 3.7V in 100mV units (initial placeholder)
+    uint8_t battery_percentage = 200;  // 100% in 0.5% units (initial placeholder)
+    esp_zb_attribute_list_t *esp_zb_power_config_cluster = esp_zb_power_config_cluster_create(&power_config_cfg);
+    esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID, &battery_voltage);
+    esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID, &battery_percentage);
+
     // ------------------------------ Create cluster list ------------------------------
     esp_zb_cluster_list_t *esp_zb_cluster_list = esp_zb_zcl_cluster_list_create();
     esp_zb_cluster_list_add_basic_cluster(esp_zb_cluster_list, esp_zb_basic_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_identify_cluster(esp_zb_cluster_list, esp_zb_identify_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+    esp_zb_cluster_list_add_power_config_cluster(esp_zb_cluster_list, esp_zb_power_config_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_temperature_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_carbon_dioxide_measurement_cluster(esp_zb_cluster_list, esp_zb_carbon_dioxide_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);

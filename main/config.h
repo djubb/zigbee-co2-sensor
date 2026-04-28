@@ -23,3 +23,12 @@
 // Misc settings, for very fine tuning
 // time in ms before the zigbee stack sends a CAN_SLEEP signal
 #define ZIGBEE_SLEEP_THRESHOLD 20
+
+// Battery voltage sensing (ESP32-C6 SuperMini)
+// GPIO1 is connected to battery via 100K/100K voltage divider
+#include "esp_adc/adc_oneshot.h"
+#define BATTERY_ADC_CHANNEL     ADC_CHANNEL_1  // GPIO1
+#define BATTERY_ADC_UNIT        ADC_UNIT_1
+#define BATTERY_VOLTAGE_DIVIDER 2              // 100K/100K divider ratio
+#define BATTERY_FULL_MV         4200           // mV at 100% charge
+#define BATTERY_EMPTY_MV        3000           // mV at 0% charge
