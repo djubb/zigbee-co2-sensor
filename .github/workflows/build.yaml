@@ -1,9 +1,15 @@
-name: Build and Deploy
+name: Build and Release
 
 on:
   push:
     branches: ["**"]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.0.0)'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -37,45 +43,36 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: co2_sensor_${{ matrix.target.chip }}
-          path: co2_sensor_${{ matrix.target.chip }}.bin
+          path: build/co2_sensor_${{ matrix.target.chip }}.bin
 
-  deploy-pages:
-    name: Deploy to GitHub Pages
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: build
+  release:
+    name: Create GitHub Release
     permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    needs: build
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Download ESP32-C6 binary
+      - name: Download built binaries
         uses: actions/download-artifact@v4
         with:
-          name: co2_sensor_esp32c6
-          path: docs/bin_latest
+          path: release
+          pattern: co2_sensor_*
+          merge-multiple: true
 
-      - name: Download ESP32-H2 binary
-        uses: actions/download-artifact@v4
+      - name: Create release tag
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          name: co2_sensor_esp32h2
-          path: docs/bin_latest
+          tagging_message: ${{ inputs.version }}
+          skip_checkout: true
+          skip_fetch: false
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          path: 'docs'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          files: release/*.bin
+          tag_name: ${{ inputs.version }}

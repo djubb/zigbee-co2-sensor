@@ -1,71 +1,41 @@
-name: Create Release
-
-# Manually triggered to cut a versioned release with binaries attached.
-# Pages deployment is handled automatically by build.yaml on push to main.
+name: Deploy to GitHub Pages
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release version (e.g. v1.0.0)'
-        required: true
-        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        target:
-          - chip: esp32c6
-            flash_freq: 80m
-          - chip: esp32h2
-            flash_freq: 48m
-
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Build firmware
-        uses: espressif/esp-idf-ci-action@v1
-        with:
-          esp_idf_version: v5.3
-          target: ${{ matrix.target.chip }}
-          path: .
-          command: |
-            idf.py build &&
-            idf.py merge-bin -o co2_sensor_${{ matrix.target.chip }}.bin -f raw
-
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: co2_sensor_${{ matrix.target.chip }}
-          path: build/co2_sensor_${{ matrix.target.chip }}.bin
-
-  release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download all binaries
-        uses: actions/download-artifact@v4
+      - name: Download latest release binaries
+        uses: robinraju/release-downloader@v1
         with:
-          path: release
-          pattern: co2_sensor_*
-          merge-multiple: true
+          fileName: '*.bin'
+          out-file-path: 'docs/bin_latest'
+          latest: true
 
-      - name: Create tag and release
-        uses: softprops/action-gh-release@v2
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          files: release/*
-          tag_name: ${{ inputs.version }}
-          name: Release ${{ inputs.version }}
-          generate_release_notes: true
+          path: 'docs'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
