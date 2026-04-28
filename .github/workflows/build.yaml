@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: co2_sensor_${{ matrix.target.chip }}
-          path: build/co2_sensor_${{ matrix.target.chip }}.bin
+          path: co2_sensor_${{ matrix.target.chip }}.bin
 
   deploy-pages:
     name: Deploy to GitHub Pages
