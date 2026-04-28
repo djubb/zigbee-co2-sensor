@@ -17,7 +17,6 @@ jobs:
       matrix:
         target:
           - chip: esp32c6
-          - chip: esp32h2
 
     runs-on: ubuntu-latest
 
