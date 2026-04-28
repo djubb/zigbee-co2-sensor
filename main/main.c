@@ -11,6 +11,7 @@
 #include "esp_sleep.h"
 #include "esp_timer.h"
 #include "config.h"
+#include "led_strip.h"
 
 static const char *TAG = "CO2";
 
@@ -130,6 +131,24 @@ static esp_err_t esp_zb_power_save_init(void)
     return esp_pm_configure(&pm_config);
 }
 
+static void turn_off_onboard_led(void) {
+    led_strip_config_t strip_config = {
+        .strip_gpio_num = 8,
+        .max_leds = 1,
+        .led_pixel_format = LED_PIXEL_FORMAT_GRB,
+        .led_model = LED_MODEL_WS2812,
+        .flags.invert_out = false,
+    };
+    led_strip_rmt_config_t rmt_config = {
+        .resolution_hz = 10 * 1000 * 1000,
+    };
+    led_strip_handle_t led_strip;
+    if (led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip) == ESP_OK) {
+        led_strip_clear(led_strip);
+        led_strip_del(led_strip);
+    }
+}
+
 void configure_internal_antenna(void) {
     gpio_reset_pin(GPIO_NUM_3);
     gpio_reset_pin(GPIO_NUM_14);
@@ -150,6 +169,7 @@ void pm_dump(void *pvParameters) {
 
 void app_main(void)
 {
+    turn_off_onboard_led();
     configure_internal_antenna();
     esp_zb_platform_config_t config = {
         .radio_config = ESP_ZB_DEFAULT_RADIO_CONFIG(),
