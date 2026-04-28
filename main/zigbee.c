@@ -1,7 +1,9 @@
 #include "esp_zigbee_core.h"
 #include "esp_check.h"
+#include "esp_log.h"
 #include "string.h"
 
+static const char *TAG = "zigbee";
 
 void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, void *value, uint8_t value_length)
 {
@@ -18,5 +20,8 @@ void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID,
     };
     esp_zb_zcl_attr_t *value_r = esp_zb_zcl_get_attribute(endpoint, clusterID, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, attributeID);
     memcpy(value_r->data_p, value, value_length);
-    ESP_ERROR_CHECK(esp_zb_zcl_report_attr_cmd_req(&cmd));
+    esp_err_t err = esp_zb_zcl_report_attr_cmd_req(&cmd);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "report_attr cluster=0x%04x attr=0x%04x: %s", clusterID, attributeID, esp_err_to_name(err));
+    }
 }
