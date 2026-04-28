@@ -123,7 +123,7 @@ int16_t sensirion_i2c_hal_free(void) {
         dev_handle = NULL;
     }
     if(bus_handle != NULL){
-        ESP_RETURN_ON_ERROR(i2c_master_bus_delete(*bus_handle), TAG, "Failed to delete I2C bus");
+        ESP_RETURN_ON_ERROR(i2c_del_master_bus(*bus_handle), TAG, "Failed to delete I2C bus");
         free(bus_handle);
         bus_handle = NULL;
     }
