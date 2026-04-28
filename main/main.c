@@ -9,6 +9,7 @@
 #include "esp_pm.h"
 #include "esp_private/esp_clk.h"
 #include "esp_sleep.h"
+#include "esp_timer.h"
 #include "config.h"
 
 static const char *TAG = "CO2";
@@ -33,6 +34,7 @@ void start_sensor_measurements()
 void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
 {
     static bool allow_sleep = false;
+    static int64_t commissioning_done_at_us = 0;
     uint32_t *p_sg_p = signal_struct->p_app_signal;
     esp_err_t err_status = signal_struct->esp_err_status;
     esp_zb_app_signal_type_t sig_type = *p_sg_p;
@@ -74,6 +76,8 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                      extended_pan_id[3], extended_pan_id[2], extended_pan_id[1], extended_pan_id[0],
                      esp_zb_get_pan_id(), esp_zb_get_current_channel(), esp_zb_get_short_address());
             zb_zdo_pim_set_long_poll_interval(ED_KEEP_ALIVE);
+            commissioning_done_at_us = esp_timer_get_time() + 60LL * 1000 * 1000;
+            ESP_LOGI(TAG, "Joined network, sleep blocked for 60s to allow ZHA interview");
         }
         else
         {
@@ -97,7 +101,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                     break;
             }
         }
-        if(allow_sleep) {
+        if(allow_sleep && esp_timer_get_time() > commissioning_done_at_us) {
             // sensor values have been read and sending via zigbee was requested
             #if DEBUG_SLEEP
             ESP_LOGI(TAG, "Going to sleep");
