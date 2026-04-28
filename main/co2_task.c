@@ -73,6 +73,7 @@ void sdc41_task(void *pvParameters)
             continue;
         }
         if (!data_ready_flag) {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
             continue;
         }
         measurement_running = false;
