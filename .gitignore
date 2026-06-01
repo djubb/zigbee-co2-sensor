@@ -1,11 +1,32 @@
+# ESP-IDF build artifacts
 build/
 managed_components/
 dependencies.lock
-.vscode/settings.json
 sdkconfig
 sdkconfig.old
-release
-# VSCode settings are defined by the esp-IDF extension
+
+# Release binaries
+release/
+*.bin
+*.elf
+*.map
+
+# VSCode (managed by esp-IDF extension)
+.vscode/settings.json
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/tasks.json
+
+# Claude Code local settings (personal, not for sharing)
+.claude/settings.local.json
+
+# macOS
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+idf_monitor_output.txt

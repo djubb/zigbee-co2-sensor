@@ -4,8 +4,8 @@
 #include "driver/gpio.h"
 
 
-#define SDC4X_SDA_PIN GPIO_NUM_22
-#define SDC4X_SCL_PIN  GPIO_NUM_23
+#define SDC4X_SDA_PIN GPIO_NUM_19  // Aligned with SCD-41 header: GND-3V3-SCL-SDA → GPIO20-GPIO19
+#define SDC4X_SCL_PIN GPIO_NUM_20  // Allows direct board-to-board pin header connection
 // Recommened measurement interval from sensirion is 5 minutes as the default ASC settings are assuming 5 minutes
 #define MEASURE_INTERVAL_MS (60 * 5 * 1000)
 
