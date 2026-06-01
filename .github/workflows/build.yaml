@@ -23,6 +23,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: github-pages
 
     steps:
       - uses: actions/checkout@v4
@@ -37,37 +38,17 @@ jobs:
             idf.py build &&
             idf.py merge-bin -o co2_sensor_esp32c6.bin -f raw
 
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: co2_sensor_esp32c6
-          path: build/co2_sensor_esp32c6.bin
-
-  deploy:
-    name: Release and Deploy Pages
-    needs: build
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download built binary
-        uses: actions/download-artifact@v4
-        with:
-          name: co2_sensor_esp32c6
-          path: build
+      # --- Deploy steps: only on main branch or manual trigger ---
 
       - name: Set release tag
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         id: tag
         run: |
           VERSION="${{ inputs.version }}"
           echo "name=${VERSION:-latest}" >> $GITHUB_OUTPUT
 
       - name: Update release tag
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -75,6 +56,7 @@ jobs:
           git push origin ${{ steps.tag.outputs.name }} --force
 
       - name: Publish release
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.name }}
@@ -83,13 +65,15 @@ jobs:
           prerelease: ${{ steps.tag.outputs.name == 'latest' }}
 
       - name: Prepare web flasher binaries
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         run: mkdir -p docs/bin_latest && cp build/co2_sensor_esp32c6.bin docs/bin_latest/
 
       - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs
 
       - name: Deploy to GitHub Pages
-        id: deployment
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: actions/deploy-pages@v4
