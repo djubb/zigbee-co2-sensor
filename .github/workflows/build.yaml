@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Deploy
 
 on:
   push:
@@ -7,67 +7,89 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. v1.0.0)'
-        required: true
-        type: string
+        description: 'Release version (e.g. v1.0.0) — leave empty to update latest'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build:
-    strategy:
-      matrix:
-        target:
-          - chip: esp32c6
-
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build firmware
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: v5.3
-          target: ${{ matrix.target.chip }}
+          target: esp32c6
           path: .
           command: |
             idf.py build &&
-            idf.py merge-bin -o co2_sensor_${{ matrix.target.chip }}.bin -f raw
+            idf.py merge-bin -o co2_sensor_esp32c6.bin -f raw
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: co2_sensor_${{ matrix.target.chip }}
-          path: build/co2_sensor_${{ matrix.target.chip }}.bin
+          name: co2_sensor_esp32c6
+          path: build/co2_sensor_esp32c6.bin
 
-  release:
-    name: Create GitHub Release
-    permissions:
-      contents: write
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+  deploy:
+    name: Release and Deploy Pages
     needs: build
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Download built binaries
+      - name: Download built binary
         uses: actions/download-artifact@v4
         with:
-          path: release
-          pattern: co2_sensor_*
-          merge-multiple: true
+          name: co2_sensor_esp32c6
+          path: build
 
-      - name: Create release tag
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          tagging_message: ${{ inputs.version }}
-          skip_checkout: true
-          skip_fetch: false
+      - name: Set release tag
+        id: tag
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "name=${VERSION:-latest}" >> $GITHUB_OUTPUT
 
-      - name: Release
+      - name: Update release tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f ${{ steps.tag.outputs.name }}
+          git push origin ${{ steps.tag.outputs.name }} --force
+
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*.bin
-          tag_name: ${{ inputs.version }}
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
+          files: build/co2_sensor_esp32c6.bin
+          prerelease: ${{ steps.tag.outputs.name == 'latest' }}
+
+      - name: Prepare web flasher binaries
+        run: mkdir -p docs/bin_latest && cp build/co2_sensor_esp32c6.bin docs/bin_latest/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
