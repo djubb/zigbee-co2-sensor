@@ -25,10 +25,10 @@
 #define ZIGBEE_SLEEP_THRESHOLD 20
 
 // Battery voltage sensing (ESP32-C6 SuperMini)
-// GPIO0 is connected to battery via 1MΩ/1MΩ voltage divider (B+ → 1MΩ → GPIO0 → 1MΩ → GND)
+// GPIO1 is connected to battery via 1MΩ/1MΩ voltage divider (B+ → 1MΩ → GPIO1 → 1MΩ → GND)
 #include "esp_adc/adc_oneshot.h"
-#define BATTERY_ADC_CHANNEL     ADC_CHANNEL_0  // GPIO0
+#define BATTERY_ADC_CHANNEL     ADC_CHANNEL_1  // GPIO1
 #define BATTERY_ADC_UNIT        ADC_UNIT_1
-#define BATTERY_VOLTAGE_DIVIDER 2              // 100K/100K divider ratio
+#define BATTERY_VOLTAGE_DIVIDER 2              // 1MΩ/1MΩ divider ratio
 #define BATTERY_FULL_MV         4200           // mV at 100% charge
 #define BATTERY_EMPTY_MV        3000           // mV at 0% charge
