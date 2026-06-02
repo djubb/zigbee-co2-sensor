@@ -20,6 +20,8 @@ RTC_DATA_ATTR bool scd4x_initialized = false;
 static uint8_t battery_read(adc_oneshot_unit_handle_t adc, adc_cali_handle_t cali)
 {
     int raw, mv;
+    // Discard first read after light sleep — GPIO isolation can leave stale charge on the pin
+    adc_oneshot_read(adc, BATTERY_ADC_CHANNEL, &raw);
     adc_oneshot_read(adc, BATTERY_ADC_CHANNEL, &raw);
     adc_cali_raw_to_voltage(cali, raw, &mv);
     int actual_mv = mv * BATTERY_VOLTAGE_DIVIDER;
