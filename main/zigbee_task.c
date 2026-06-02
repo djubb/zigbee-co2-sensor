@@ -176,5 +176,8 @@ void esp_zb_task(void *pvParameters)
     };
     esp_zb_zcl_update_reporting_info(&batt_report);
 
+    batt_report.attr_id = ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID;
+    esp_zb_zcl_update_reporting_info(&batt_report);
+
     esp_zb_stack_main_loop();
 }
