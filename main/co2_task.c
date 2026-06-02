@@ -146,8 +146,6 @@ void sdc41_task(void *pvParameters)
             }
             if(plausible) {
                 uint8_t batt_pct = battery_read(adc_handle, adc_cali_handle);
-                uint8_t batt_voltage = (uint8_t)((BATTERY_EMPTY_MV + (uint32_t)batt_pct * (BATTERY_FULL_MV - BATTERY_EMPTY_MV) / 200) / 100);
-                reportAttribute(HA_ESP_CO2_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID, &batt_voltage, 1);
                 reportAttribute(HA_ESP_CO2_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID, &batt_pct, 1);
                 xTaskNotify(xZigbeeTask, CO2_MEASUREMENT_DONE, eSetValueWithOverwrite);
                 vTaskDelay(MEASURE_INTERVAL_MS / portTICK_PERIOD_MS);
