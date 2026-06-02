@@ -5,6 +5,7 @@
 #include "freertos/task.h"
 #include "ha/esp_zigbee_ha_standard.h"
 #include "zcl/esp_zigbee_zcl_power_config.h"
+#include "zcl/esp_zigbee_zcl_command.h"
 #include "zigbee.h"
 #include "tasks.h"
 #include "esp_pm.h"
@@ -122,12 +123,8 @@ void esp_zb_task(void *pvParameters)
     uint8_t battery_voltage = 37;      // 3.7V in 100mV units (initial placeholder)
     uint8_t battery_percentage = 200;  // 100% in 0.5% units (initial placeholder)
     esp_zb_attribute_list_t *esp_zb_power_config_cluster = esp_zb_power_config_cluster_create(&power_config_cfg);
-    esp_zb_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG,
-        ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID,
-        ESP_ZB_ZCL_ATTR_TYPE_U8, ESP_ZB_ZCL_ATTR_ACCESS_READ_ONLY | ESP_ZB_ZCL_ATTR_ACCESS_REPORTING, &battery_voltage);
-    esp_zb_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG,
-        ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID,
-        ESP_ZB_ZCL_ATTR_TYPE_U8, ESP_ZB_ZCL_ATTR_ACCESS_READ_ONLY | ESP_ZB_ZCL_ATTR_ACCESS_REPORTING, &battery_percentage);
+    esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID, &battery_voltage);
+    esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID, &battery_percentage);
 
     // ------------------------------ Create cluster list ------------------------------
     esp_zb_cluster_list_t *esp_zb_cluster_list = esp_zb_zcl_cluster_list_create();
@@ -154,5 +151,30 @@ void esp_zb_task(void *pvParameters)
     esp_zb_set_primary_network_channel_set(ESP_ZB_PRIMARY_CHANNEL_MASK);
 
     ESP_ERROR_CHECK(esp_zb_start(false));
+
+    // Pre-configure battery percentage reporting so the stack has a reporting table entry.
+    // Without this, esp_zb_zcl_report_attr_cmd_req returns ESP_ERR_NOT_SUPPORTED
+    // because ZHA does not automatically send Configure Reporting for the Power Config cluster.
+    esp_zb_zcl_reporting_info_t batt_report = {
+        .direction    = ESP_ZB_ZCL_CMD_DIRECTION_TO_CLI,
+        .ep           = HA_ESP_CO2_ENDPOINT,
+        .cluster_id   = ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG,
+        .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+        .attr_id      = ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID,
+        .u.send_info  = {
+            .min_interval     = 0,
+            .max_interval     = MEASURE_INTERVAL_MS / 1000,
+            .def_min_interval = 0,
+            .def_max_interval = MEASURE_INTERVAL_MS / 1000,
+            .delta.u8         = 0,
+        },
+        .dst = {
+            .short_addr = 0x0000,
+            .endpoint   = 1,
+            .profile_id = ESP_ZB_AF_HA_PROFILE_ID,
+        },
+    };
+    esp_zb_zcl_update_reporting_info(&batt_report);
+
     esp_zb_stack_main_loop();
 }
