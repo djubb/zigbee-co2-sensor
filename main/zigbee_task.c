@@ -122,9 +122,11 @@ void esp_zb_task(void *pvParameters)
     uint8_t battery_voltage = 37;      // 3.7V in 100mV units (initial placeholder)
     uint8_t battery_percentage = 200;  // 100% in 0.5% units (initial placeholder)
     esp_zb_attribute_list_t *esp_zb_power_config_cluster = esp_zb_power_config_cluster_create(&power_config_cfg);
-    esp_zb_custom_cluster_add_custom_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID,
+    esp_zb_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG,
+        ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID,
         ESP_ZB_ZCL_ATTR_TYPE_U8, ESP_ZB_ZCL_ATTR_ACCESS_READ_ONLY | ESP_ZB_ZCL_ATTR_ACCESS_REPORTING, &battery_voltage);
-    esp_zb_custom_cluster_add_custom_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID,
+    esp_zb_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG,
+        ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID,
         ESP_ZB_ZCL_ATTR_TYPE_U8, ESP_ZB_ZCL_ATTR_ACCESS_READ_ONLY | ESP_ZB_ZCL_ATTR_ACCESS_REPORTING, &battery_percentage);
 
     // ------------------------------ Create cluster list ------------------------------
