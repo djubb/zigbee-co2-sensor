@@ -47,15 +47,18 @@ SCD-41 breakout:      GND  —  VCC  —  SCL     —  SDA
 Для отображения уровня заряда в Home Assistant:
 
 ```text
-B+  ── 2 МОм ──┬── 2 МОм ── GND
+B+  ── 1 МОм ──┬── 1 МОм ── GND
                │
-             GPIO0 (ADC)
+             GPIO1 (ADC)
 ```
 
-После установки резисторов обновить в [main/config.h](main/config.h):
+> **Важно:** не используйте GPIO0 — это strapping pin. Резистор подтягивает его к HIGH при старте,
+> что вызывает `boot:0x11 (SDIO_REI_FEO_V1_BOOT)` и устройство не загружается.
+
+Значения по умолчанию в [main/config.h](main/config.h) уже настроены на GPIO1:
 
 ```c
-#define BATTERY_ADC_CHANNEL  ADC_CHANNEL_0   // GPIO0
+#define BATTERY_ADC_CHANNEL     ADC_CHANNEL_1  // GPIO1
 #define BATTERY_VOLTAGE_DIVIDER 2
 ```
 
